@@ -17,7 +17,7 @@ This educational project demonstrates:
 console-sql-injection-demo/
 ├── Program.cs                          # Main application with vulnerable and secure queries
 ├── console-sql-injection-demo.csproj   # Project configuration
-├── facturas.db                         # SQLite database (auto-generated)
+├── customers.db                         # SQLite database (auto-generated)
 └── README.md                           # This file
 ```
 
@@ -25,38 +25,38 @@ console-sql-injection-demo/
 
 The application uses SQLite with three main tables:
 
-### Clientes (Customers)
+### Customers
 ```sql
-CREATE TABLE Clientes (
-    ClienteId INTEGER PRIMARY KEY,
-    Nombre TEXT NOT NULL,
+CREATE TABLE Customers (
+    CustomerId INTEGER PRIMARY KEY,
+    Name TEXT NOT NULL,
     Email TEXT NOT NULL,
-    Telefono TEXT
+    Phone TEXT
 );
 ```
 
-### Facturas (Invoices)
+### Invoices
 ```sql
-CREATE TABLE Facturas (
-    FacturaId INTEGER PRIMARY KEY,
-    NumeroFactura TEXT UNIQUE NOT NULL,
-    ClienteId INTEGER NOT NULL,
-    FechaEmision DATE NOT NULL,
+CREATE TABLE Invoices (
+    InvoiceId INTEGER PRIMARY KEY,
+    InvoiceNumber TEXT UNIQUE NOT NULL,
+    CustomerId INTEGER NOT NULL,
+    IssueDate DATE NOT NULL,
     Total DECIMAL(10,2) NOT NULL,
-    Estado TEXT DEFAULT 'Pendiente',
-    FOREIGN KEY(ClienteId) REFERENCES Clientes(ClienteId)
+    Status TEXT DEFAULT 'Pending',
+    FOREIGN KEY(CustomerId) REFERENCES Customers(CustomerId)
 );
 ```
 
-### DetallesFactura (Invoice Details)
+### InvoiceDetails
 ```sql
-CREATE TABLE DetallesFactura (
-    DetalleId INTEGER PRIMARY KEY,
-    FacturaId INTEGER NOT NULL,
-    Descripcion TEXT NOT NULL,
-    Cantidad INTEGER NOT NULL,
-    PrecioUnitario DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY(FacturaId) REFERENCES Facturas(FacturaId)
+CREATE TABLE InvoiceDetails (
+    DetailId INTEGER PRIMARY KEY,
+    InvoiceId INTEGER NOT NULL,
+    Description TEXT NOT NULL,
+    Quantity INTEGER NOT NULL,
+    UnitPrice DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId)
 );
 ```
 
@@ -292,7 +292,7 @@ The application automatically creates sample data with:
 **Find invoice by ID (Secure):**
 ```
 Input: 1
-Output: Invoice FAC-2025-001 for Tech Solutions S.A., Total: $1500.00
+Output: Invoice INV-2025-001 for Tech Solutions S.A., Total: $1500.00
 ```
 
 **Test SQL Injection (Vulnerable):**
