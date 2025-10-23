@@ -1,30 +1,27 @@
 ﻿using System;
 using System.Data;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.IO;
 
-// SQLite database path
-string dbPath = "invoices.db";
-string connectionString = $"Data Source={dbPath};Version=3;";
+// Ruta de la base de datos SQLite
+string dbPath = "customers.db";
+string connectionString = $"Data Source={dbPath}";
 
-// Create database and tables
+// Crear la base de datos y tablas
 InitializeDatabase(connectionString);
 
-// Insert sample data
+// Insertar datos de ejemplo
 InsertSampleData(connectionString);
 
-// Interactive menu
+// Menú interactivo
 while (true)
 {
-    Console.WriteLine("\n╔══════════════════════════════════════════╗");
-    Console.WriteLine("║    🔒 SQL INJECTION DEMO - SQLITE       ║");
-    Console.WriteLine("╚══════════════════════════════════════════╝");
-    Console.WriteLine("\n🔍 Query Testing Options:");
-    Console.WriteLine("  1️⃣  Search Invoice by ID (VULNERABLE to SQL Injection)");
-    Console.WriteLine("  2️⃣  Search Invoice by ID (SAFE with Parameters)");
-    Console.WriteLine("  3️⃣  List All Invoices");
-    Console.WriteLine("  4️⃣  Exit");
-    Console.Write("\n📌 Select an option: ");
+    Console.WriteLine("\n=== SQL INJECTION DEMO - CUSTOMER SEARCH ===");
+    Console.WriteLine("1. Search customer by ID (VULNERABLE)");
+    Console.WriteLine("2. Search customer by ID (SAFE with parameters)");
+    Console.WriteLine("3. List all customers");
+    Console.WriteLine("4. Exit");
+    Console.Write("Select an option: ");
     
     string option = Console.ReadLine() ?? "";
     
@@ -37,215 +34,138 @@ while (true)
             DemoSafeQuery(connectionString);
             break;
         case "3":
-            ListAllInvoices(connectionString);
+            ListAllCustomers(connectionString);
             break;
         case "4":
-            Console.WriteLine("\n👋 Goodbye! Stay secure!\n");
+            Console.WriteLine("Goodbye!");
             return;
         default:
-            Console.WriteLine("\n❌ Invalid option. Please try again.");
+            Console.WriteLine("Invalid option");
             break;
     }
 }
 
 /// <summary>
-/// Initializes the SQLite database with required tables
+/// Initializes the SQLite database with the necessary tables
 /// </summary>
 void InitializeDatabase(string connectionString)
 {
     try
     {
-        using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+        using (SqliteConnection connection = new SqliteConnection(connectionString))
         {
             connection.Open();
             
-            // Create Customers table
+            // Create customers table
             string createCustomersTable = @"
                 CREATE TABLE IF NOT EXISTS Customers (
                     CustomerId INTEGER PRIMARY KEY AUTOINCREMENT,
                     Name TEXT NOT NULL,
                     Email TEXT NOT NULL,
-                    Phone TEXT
-                );";
-            
-            // Create Invoices table
-            string createInvoicesTable = @"
-                CREATE TABLE IF NOT EXISTS Invoices (
-                    InvoiceId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    InvoiceNumber TEXT UNIQUE NOT NULL,
-                    CustomerId INTEGER NOT NULL,
-                    IssueDate DATE NOT NULL,
-                    Total DECIMAL(10,2) NOT NULL,
-                    Status TEXT DEFAULT 'Pending',
-                    FOREIGN KEY(CustomerId) REFERENCES Customers(CustomerId)
-                );";
-            
-            // Create Invoice Details table
-            string createDetailsTable = @"
-                CREATE TABLE IF NOT EXISTS InvoiceDetails (
-                    DetailId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    InvoiceId INTEGER NOT NULL,
-                    Description TEXT NOT NULL,
-                    Quantity INTEGER NOT NULL,
-                    UnitPrice DECIMAL(10,2) NOT NULL,
-                    FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId)
+                    Phone TEXT NOT NULL,
+                    Country TEXT NOT NULL
                 );";
             
             ExecuteSQL(connection, createCustomersTable);
-            ExecuteSQL(connection, createInvoicesTable);
-            ExecuteSQL(connection, createDetailsTable);
             
-            Console.WriteLine("✅ Database initialized successfully\n");
+            Console.WriteLine("✓ Database initialized successfully");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Error initializing database: {ex.Message}");
+        Console.WriteLine($"Error initializing database: {ex.Message}");
     }
 }
 
 /// <summary>
-/// Inserts sample invoice data into the database
+/// Inserts sample data into the database
 /// </summary>
 void InsertSampleData(string connectionString)
 {
     try
     {
-        using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+        using (SqliteConnection connection = new SqliteConnection(connectionString))
         {
             connection.Open();
             
             // Check if data already exists
-            using (SQLiteCommand checkCmd = new SQLiteCommand("SELECT COUNT(*) FROM Invoices", connection))
+            using (SqliteCommand checkCmd = new SqliteCommand("SELECT COUNT(*) FROM Customers", connection))
             {
-                int count = (int)checkCmd.ExecuteScalar();
+                var countResult = checkCmd.ExecuteScalar();
+                int count = countResult is int ? (int)countResult : 0;
                 if (count > 0)
                 {
-                    Console.WriteLine("✅ Sample data already exists in the database\n");
+                    Console.WriteLine("✓ Sample data already exists in the database");
                     return;
                 }
             }
             
-            // Insert customers
+            // Insert sample customers
             string[] customers = new[]
             {
-                ("Tech Solutions S.A.", "contact@techsol.com", "555-0001"),
-                ("Global Imports Ltd.", "sales@globalimports.com", "555-0002"),
-                ("Local Services Inc.", "info@localservices.com", "555-0003"),
-                ("Premium Consulting Group", "admin@premiumconsulting.com", "555-0004"),
-                ("Digital Marketing Pro", "support@digitalmarketingpro.com", "555-0005")
+                "INSERT INTO Customers (Name, Email, Phone, Country) VALUES ('John Smith', 'john.smith@example.com', '+1-555-0101', 'USA')",
+                "INSERT INTO Customers (Name, Email, Phone, Country) VALUES ('Mary Johnson', 'mary.johnson@example.com', '+1-555-0102', 'USA')",
+                "INSERT INTO Customers (Name, Email, Phone, Country) VALUES ('Robert Williams', 'robert.williams@example.com', '+1-555-0103', 'Canada')",
+                "INSERT INTO Customers (Name, Email, Phone, Country) VALUES ('Patricia Brown', 'patricia.brown@example.com', '+1-555-0104', 'USA')",
+                "INSERT INTO Customers (Name, Email, Phone, Country) VALUES ('Michael Davis', 'michael.davis@example.com', '+44-20-7946-0958', 'United Kingdom')",
+                "INSERT INTO Customers (Name, Email, Phone, Country) VALUES ('Jennifer Garcia', 'jennifer.garcia@example.com', '+1-555-0106', 'USA')",
+                "INSERT INTO Customers (Name, Email, Phone, Country) VALUES ('David Rodriguez', 'david.rodriguez@example.com', '+34-91-123-4567', 'Spain')",
+                "INSERT INTO Customers (Name, Email, Phone, Country) VALUES ('Linda Martinez', 'linda.martinez@example.com', '+33-1-42-68-53-00', 'France')"
             };
             
-            var customerIds = new List<int>();
-            
-            foreach (var (name, email, phone) in customers)
+            foreach (string query in customers)
             {
-                string insertCustomer = $"INSERT INTO Customers (Name, Email, Phone) VALUES ('{name}', '{email}', '{phone}')";
-                ExecuteSQL(connection, insertCustomer);
+                ExecuteSQL(connection, query);
             }
             
-            // Get customer IDs
-            using (SQLiteCommand getCustomersCmd = new SQLiteCommand("SELECT CustomerId FROM Customers", connection))
-            {
-                using (SQLiteDataReader reader = getCustomersCmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        customerIds.Add((int)reader["CustomerId"]);
-                    }
-                }
-            }
-            
-            // Insert invoices with details
-            var invoices = new[]
-            {
-                ("INV-2025-001", 1, "2025-01-15", 1500.00m),
-                ("INV-2025-002", 2, "2025-01-18", 2300.50m),
-                ("INV-2025-003", 3, "2025-02-01", 850.00m),
-                ("INV-2025-004", 1, "2025-02-05", 3200.75m),
-                ("INV-2025-005", 4, "2025-02-10", 1100.00m),
-                ("INV-2025-006", 5, "2025-02-15", 2650.25m),
-                ("INV-2025-007", 2, "2025-02-20", 1900.00m),
-                ("INV-2025-008", 3, "2025-02-25", 2200.50m),
-            };
-            
-            foreach (var (numInvoice, customerId, date, total) in invoices)
-            {
-                string insertInvoice = $"INSERT INTO Invoices (InvoiceNumber, CustomerId, IssueDate, Total, Status) VALUES ('{numInvoice}', {customerId}, '{date}', {total.ToString().Replace(',', '.')}, 'Paid')";
-                ExecuteSQL(connection, insertInvoice);
-            }
-            
-            // Insert invoice details
-            var details = new[]
-            {
-                (1, "Consulting Services", 5, 300.00m),
-                (1, "Software License", 1, 0.00m),
-                (2, "System Implementation", 1, 2300.50m),
-                (3, "Annual Maintenance", 1, 850.00m),
-                (4, "Custom Development", 10, 320.00m),
-                (5, "Online Training", 2, 550.00m),
-                (6, "Security Audit", 1, 2650.25m),
-                (7, "Technical Support", 6, 316.67m),
-                (8, "System Updates", 4, 550.00m),
-            };
-            
-            foreach (var (invoiceId, description, quantity, price) in details)
-            {
-                string insertDetail = $"INSERT INTO InvoiceDetails (InvoiceId, Description, Quantity, UnitPrice) VALUES ({invoiceId}, '{description}', {quantity}, {price.ToString().Replace(',', '.')})";
-                ExecuteSQL(connection, insertDetail);
-            }
-            
-            Console.WriteLine("✅ Sample data inserted successfully\n");
+            Console.WriteLine("✓ Sample customers inserted successfully");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Error inserting data: {ex.Message}");
+        Console.WriteLine($"Error inserting data: {ex.Message}");
     }
 }
 
 /// <summary>
-/// Demonstrates a VULNERABLE query susceptible to SQL Injection
+/// Demonstrates a VULNERABLE query to SQL Injection
 /// </summary>
 void DemoVulnerableQuery(string connectionString)
 {
-    Console.Write("\n🎯 Enter the Invoice ID (VULNERABLE to SQL Injection!): ");
-    string invoiceId = Console.ReadLine() ?? "";
+    Console.Write("\nEnter customer ID (⚠️ VULNERABLE to SQL Injection!): ");
+    string customerId = Console.ReadLine() ?? "";
     
-    Console.WriteLine($"\n⚠️  VULNERABLE QUERY:\n");
+    Console.WriteLine($"\n⚠️ VULNERABLE QUERY:\n");
     
-    // This is the INSECURE way - vulnerable to SQL Injection
-    string query = $"SELECT i.InvoiceId, i.InvoiceNumber, c.Name, i.IssueDate, i.Total FROM Invoices i JOIN Customers c ON i.CustomerId = c.CustomerId WHERE i.InvoiceId = '{invoiceId}'";
+    // This is the UNSAFE way - vulnerable to SQL Injection
+    string query = $"SELECT CustomerId, Name, Email, Phone, Country FROM Customers WHERE CustomerId = {customerId}";
     
-    Console.ForegroundColor = ConsoleColor.Red;
     Console.WriteLine(query);
-    Console.ResetColor();
-    
-    Console.WriteLine("\n💡 SQL Injection Examples You Can Try:");
-    Console.WriteLine("  • 1 OR 1=1 --   (returns all invoices)");
-    Console.WriteLine("  • 1; DROP TABLE Invoices; --   (attempts to delete table)");
+    Console.WriteLine("\nExamples of SQL Injection you can try:");
+    Console.WriteLine("  • 1 OR 1=1   (returns all customers)");
+    Console.WriteLine("  • 1; DROP TABLE Customers; --   (tries to delete the table)");
     Console.WriteLine("  • 1 UNION SELECT * FROM Customers --   (unauthorized access)\n");
     
     try
     {
-        using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+        using (SqliteConnection connection = new SqliteConnection(connectionString))
         {
             connection.Open();
-            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            using (SqliteCommand command = new SqliteCommand(query, connection))
             {
-                using (SQLiteDataReader reader = command.ExecuteReader())
+                using (SqliteDataReader reader = command.ExecuteReader())
                 {
                     if (reader.HasRows)
                     {
                         Console.WriteLine("📋 Results:");
                         while (reader.Read())
                         {
-                            Console.WriteLine($"  📌 ID: {reader["InvoiceId"]}, Number: {reader["InvoiceNumber"]}, Customer: {reader["Name"]}, Date: {reader["IssueDate"]}, Total: ${reader["Total"]}");
+                            Console.WriteLine($"  ID: {reader["CustomerId"]}, Name: {reader["Name"]}, Email: {reader["Email"]}, Phone: {reader["Phone"]}, Country: {reader["Country"]}");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("❌ No invoices found");
+                        Console.WriteLine("No customers found");
                     }
                 }
             }
@@ -258,45 +178,43 @@ void DemoVulnerableQuery(string connectionString)
 }
 
 /// <summary>
-/// Demonstrates a SAFE query using parameterized statements
+/// Demonstrates a SAFE query using prepared parameters
 /// </summary>
 void DemoSafeQuery(string connectionString)
 {
-    Console.Write("\n🎯 Enter the Invoice ID (SAFE with Parameters): ");
-    string invoiceId = Console.ReadLine() ?? "";
+    Console.Write("\nEnter customer ID (✓ SAFE with parameters): ");
+    string customerId = Console.ReadLine() ?? "";
     
-    Console.WriteLine($"\n✅ SECURE QUERY (with Parameterized Queries):\n");
+    Console.WriteLine($"\n✓ SAFE QUERY (with prepared parameters):\n");
     
-    string query = "SELECT i.InvoiceId, i.InvoiceNumber, c.Name, i.IssueDate, i.Total FROM Invoices i JOIN Customers c ON i.CustomerId = c.CustomerId WHERE i.InvoiceId = @InvoiceId";
+    string query = "SELECT CustomerId, Name, Email, Phone, Country FROM Customers WHERE CustomerId = @CustomerId";
     
-    Console.ForegroundColor = ConsoleColor.Green;
     Console.WriteLine(query);
-    Console.ResetColor();
-    Console.WriteLine($"Parameter @InvoiceId = '{invoiceId}'\n");
+    Console.WriteLine($"Parameter @CustomerId = '{customerId}'\n");
     
     try
     {
-        using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+        using (SqliteConnection connection = new SqliteConnection(connectionString))
         {
             connection.Open();
-            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            using (SqliteCommand command = new SqliteCommand(query, connection))
             {
-                // This is the SECURE way - using parameterized queries
-                command.Parameters.AddWithValue("@InvoiceId", invoiceId);
+                // This is the SAFE way - using prepared parameters
+                command.Parameters.AddWithValue("@CustomerId", customerId);
                 
-                using (SQLiteDataReader reader = command.ExecuteReader())
+                using (SqliteDataReader reader = command.ExecuteReader())
                 {
                     if (reader.HasRows)
                     {
                         Console.WriteLine("📋 Results:");
                         while (reader.Read())
                         {
-                            Console.WriteLine($"  📌 ID: {reader["InvoiceId"]}, Number: {reader["InvoiceNumber"]}, Customer: {reader["Name"]}, Date: {reader["IssueDate"]}, Total: ${reader["Total"]}");
+                            Console.WriteLine($"  ID: {reader["CustomerId"]}, Name: {reader["Name"]}, Email: {reader["Email"]}, Phone: {reader["Phone"]}, Country: {reader["Country"]}");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("❌ No invoices found");
+                        Console.WriteLine("No customers found");
                     }
                 }
             }
@@ -309,42 +227,30 @@ void DemoSafeQuery(string connectionString)
 }
 
 /// <summary>
-/// Lists all invoices in the database
+/// Lists all customers from the database
 /// </summary>
-void ListAllInvoices(string connectionString)
+void ListAllCustomers(string connectionString)
 {
-    Console.WriteLine("\n📋 ALL INVOICES:\n");
+    Console.WriteLine("\n📋 ALL CUSTOMERS:\n");
     
-    string query = "SELECT i.InvoiceId, i.InvoiceNumber, c.Name, i.IssueDate, i.Total, i.Status FROM Invoices i JOIN Customers c ON i.CustomerId = c.CustomerId ORDER BY i.InvoiceId";
+    string query = "SELECT CustomerId, Name, Email, Phone, Country FROM Customers ORDER BY CustomerId";
     
     try
     {
-        using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+        using (SqliteConnection connection = new SqliteConnection(connectionString))
         {
             connection.Open();
-            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            using (SqliteCommand command = new SqliteCommand(query, connection))
             {
-                using (SQLiteDataReader reader = command.ExecuteReader())
+                using (SqliteDataReader reader = command.ExecuteReader())
                 {
                     int count = 0;
-                    Console.WriteLine("┌────┬──────────────┬──────────────────────┬────────────┬──────────┬─────────┐");
-                    Console.WriteLine("│ ID │ Invoice Num  │ Customer             │ Date       │ Total    │ Status  │");
-                    Console.WriteLine("├────┼──────────────┼──────────────────────┼────────────┼──────────┼─────────┤");
-                    
                     while (reader.Read())
                     {
-                        string id = reader["InvoiceId"].ToString();
-                        string invNum = reader["InvoiceNumber"].ToString();
-                        string customer = reader["Name"].ToString().PadRight(20);
-                        string date = reader["IssueDate"].ToString();
-                        string total = String.Format("{0:C}", reader["Total"]);
-                        string status = reader["Status"].ToString();
-                        
-                        Console.WriteLine($"│ {id.PadRight(2)} │ {invNum.PadRight(12)} │ {customer} │ {date} │ {total.PadRight(8)} │ {status.PadRight(7)} │");
+                        Console.WriteLine($"[{reader["CustomerId"]}] {reader["Name"]} | Email: {reader["Email"]} | Phone: {reader["Phone"]} | Country: {reader["Country"]}");
                         count++;
                     }
-                    Console.WriteLine("└────┴──────────────┴──────────────────────┴────────────┴──────────┴─────────┘");
-                    Console.WriteLine($"\n📊 Total: {count} invoices\n");
+                    Console.WriteLine($"\nTotal: {count} customers");
                 }
             }
         }
@@ -358,9 +264,9 @@ void ListAllInvoices(string connectionString)
 /// <summary>
 /// Executes a SQL statement
 /// </summary>
-void ExecuteSQL(SQLiteConnection connection, string query)
+void ExecuteSQL(SqliteConnection connection, string query)
 {
-    using (SQLiteCommand command = new SQLiteCommand(query, connection))
+    using (SqliteCommand command = new SqliteCommand(query, connection))
     {
         command.ExecuteNonQuery();
     }
